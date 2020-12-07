@@ -143,7 +143,7 @@ void NN::saveNN() {
     std::time_t t = std::time(0); // get time now
     std::tm* now = std::localtime(&t);
 
-    std::string name = "../NN_" + std::to_string(now->tm_year + 1900) +"_" +
+    std::string name = "..\\NN_" + std::to_string(now->tm_year + 1900) +"_" +
         std::to_string(now->tm_mon + 1) + "_" + std::to_string(now->tm_mday) + "_" +
         std::to_string(now->tm_hour) + "_" + std::to_string(now->tm_min) + "_" + 
         std::to_string(now->tm_sec) + ".txt";
@@ -160,28 +160,25 @@ void NN::saveNN() {
             }
         out << std::endl;
     }
-    //for (int i = 0; i < layerCount; i++) {
-    //    for (int hid = 0; hid < list[i].getOutCount(); hid++)
-    //            out << list[i].getHidden()[hid] << " ";
-    //    out << std::endl;
-    //}
 }
 
 void NN::readNN(std::string path) {
-    std::ifstream file(path, std::ios::out);
+    std::ifstream file(path);
 
     if (file.is_open()) {
         file >> layerCount;
         list = (Layer*)malloc((layerCount) * sizeof(Layer));
-        int tmp = -1;
+        int input = -1;
         int in = 0, out = 0;
         for (int i = 0; i < layerCount; i++) {
             file >> in >> out;
-            if (i == 0) tmp = in;
+            if (i == 0) input = in;
             list[i].setIO(in, out);
         }
-        inputs = (float*)malloc((tmp) * sizeof(float));
+        inputs = (float*)malloc((input) * sizeof(float));
         targets = (float*)malloc((out) * sizeof(float));
+        inputNeurons = input;
+        outputNeurons = out;
         float wight = 0;
         for (int i = 0; i < layerCount; i++)
             for (int hid = 0; hid < list[i].getInCount(); hid++)
@@ -189,11 +186,6 @@ void NN::readNN(std::string path) {
                     file >> wight;
                     list[i].setMatrix(hid, ou, wight);
                 }
-        //for (int i = 0; i < layerCount; i++)
-        //    for (int hid = 0; hid < list[i].getOutCount(); hid++) {
-        //        file >> wight;
-        //        list[i].setHidden(hid, wight);
-        //    }
     } else {
         throw std::runtime_error("Unable to open file `" + path + "`");
     }

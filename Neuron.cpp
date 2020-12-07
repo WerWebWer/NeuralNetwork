@@ -17,6 +17,10 @@ Neuron::Neuron(std::vector<unsigned int> layers) {
     }
 }
 
+Neuron::Neuron(std::string path) {
+    readNN(path);
+}
+
 void Neuron::runThrough(bool stat) {
     list[0].makeHidden(inputs);
     for (int i = 1; i < layerCount; i++)
@@ -77,4 +81,59 @@ std::pair<int, float> Neuron::highProbability(float* in) {
         }
     }
     return std::pair<int, float>(max_count,max_probability);
+}
+
+std::string Neuron::saveNN() {
+    std::time_t t = std::time(0); // get time now
+    std::tm* now = std::localtime(&t);
+
+    std::string name = "..\\NN_" + std::to_string(now->tm_year + 1900) + "_" +
+        std::to_string(now->tm_mon + 1) + "_" + std::to_string(now->tm_mday) + "_" +
+        std::to_string(now->tm_hour) + "_" + std::to_string(now->tm_min) + "_" +
+        std::to_string(now->tm_sec) + ".txt";
+
+    std::ofstream out(name);
+    out << layerCount << std::endl;
+    for (int i = 0; i < layerCount; i++)
+        out << list[i].getSize().first << " " << list[i].getSize().second << std::endl;
+    for (int i = 0; i < layerCount; i++) {
+        for (int hid = 0; hid < list[i].getInCount(); hid++) {
+            for (int ou = 0; ou < list[i].getOutCount(); ou++) {
+                float tmp = list[i].getMatrix()[hid][ou];
+                out << tmp << " ";
+            }
+        }
+        out << std::endl;
+    }
+    return name;
+}
+
+void Neuron::readNN(std::string path) {
+    std::ifstream file(path);
+
+    if (file.is_open()) {
+        file >> layerCount;
+        list = (nnLayer*)malloc((layerCount) * sizeof(nnLayer));
+        int input = -1;
+        int in = 0, out = 0;
+        for (int i = 0; i < layerCount; i++) {
+            file >> in >> out;
+            if (i == 0) input = in;
+            list[i].setIO(in, out);
+        }
+        inputs = (float*)malloc((input) * sizeof(float));
+        targets = (float*)malloc((out) * sizeof(float));
+        inputNeurons = input;
+        outputNeurons = out;
+        float wight = 0;
+        for (int i = 0; i < layerCount; i++)
+            for (int hid = 0; hid < list[i].getInCount(); hid++)
+                for (int ou = 0; ou < list[i].getOutCount(); ou++) {
+                    file >> wight;
+                    list[i].setMatrix(hid, ou, wight);
+                }
+    }
+    else {
+        throw std::runtime_error("Unable to open file `" + path + "`");
+    }
 }

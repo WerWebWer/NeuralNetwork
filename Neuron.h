@@ -3,10 +3,14 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include <fstream>
+#include <chrono>
+#include <ctime>
+#include <string>
 
 typedef unsigned char uchar;
 
-#define learnRate 0.1 // 0.01
+#define learnRate (float)0.1 // 0.01
 #define randWeight (float)(( ((float)rand() / (float)RAND_MAX) - 0.5)* pow(out,-0.2))
 
 struct nnLayer {
@@ -18,6 +22,7 @@ struct nnLayer {
     int getInCount() { return in; }
     int getOutCount() { return out; }
     float** getMatrix() { return matrix; }
+    void setMatrix(int hid, int ou, float wight) { matrix[hid][ou] = wight; };
     void setIO(int input, int output) {
         in = input;
         out = output;
@@ -32,7 +37,7 @@ struct nnLayer {
             }
         }
         //printArray(matrix, in, out);
-    }
+    };
     void makeHidden(float* input) {
         for (size_t hid = 0; hid < out; hid++) {
             float tmpS = 0;
@@ -54,14 +59,15 @@ struct nnLayer {
     void printArray(float** arr, size_t w, size_t h) {
         std::cout << std::endl << "printArray [][] : " << std::endl;
         for (size_t i = 0; i < w; i++) {
-            for (size_t j = 0; j < h; j++)  
+            for (size_t j = 0; j < h; j++)
                 std::cout << arr[i][j] << " ";
             std::cout << std::endl;
         }
-    }
+    };
     float* getError() {
         return error;
     };
+    std::pair<int, int> getSize() { return std::pair<int, int>(in, out); };
     void calcHidError(float* targets, float** outWeights, int inS, int outS) {
         error = (float*)malloc((inS) * sizeof(float));
         for (int hid = 0; hid < inS; hid++) {
@@ -90,13 +96,15 @@ struct nnLayer {
 class Neuron {
 public:
     Neuron(std::vector<unsigned int> layers);
-
+    Neuron(std::string path);
     void runThrough(bool ok);
     void backPropagate();
     void train(float* in, float* targ);
     void filling(float* in);
     void printArray(float* arr, size_t s);
     std::pair<int, float> highProbability(float* in);
+    std::string saveNN();
+    void readNN(std::string path);
 
 private:
     struct nnLayer* list; // layers
