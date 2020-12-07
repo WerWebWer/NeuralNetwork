@@ -1,6 +1,4 @@
 ﻿#include <ctime>
-
-#include "Neuron.h"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -8,9 +6,20 @@
 #include <limits> 
 #include <stdint.h>
 #include <cstdint>
+#include <stdio.h>
+#include <Windows.h>
+#include <string>
+#include <thread>
+
+#include "Neuron.h"
+#include "Neuro.h"
 
 typedef unsigned char uchar;
 typedef unsigned int uint;
+
+int widht;
+int height;
+int prog;
 
 int reverseInt(int i) {
     unsigned char c1, c2, c3, c4;
@@ -99,74 +108,135 @@ int* read_mnist_labels(std::string full_path, int& number_of_labels) {
     }
 }
 
+void getSizeWindows() {
+    HANDLE hWndConsole;
+    if (hWndConsole = GetStdHandle(-12))
+    {
+        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+        if (GetConsoleScreenBufferInfo(hWndConsole, &consoleInfo))
+        {
+            widht = consoleInfo.srWindow.Right - consoleInfo.srWindow.Left + 1;
+            height = consoleInfo.srWindow.Bottom - consoleInfo.srWindow.Top + 1;
+        }
+        else
+            printf("Error: %d\n", GetLastError());
+    }
+    else
+        printf("Error: %d\n", GetLastError());
+}
+
+void printProgress(int count_mnist_images_train) {
+    getSizeWindows();
+    widht -= 19;
+    std::string s = "";
+    for (int i = 0; i < widht; i++) s += "-";
+    std::cout << s.size() << std::endl;
+    int one_simbol = count_mnist_images_train / widht;
+    int p = 0;
+    while (prog < count_mnist_images_train-1) {
+        int progress = prog * 100 / count_mnist_images_train;
+        printf("\rProcessing (%d%%) [%s]", progress, s.c_str()); //19
+        fflush(stdout);
+        
+        if (count_mnist_images_train * p /92 == prog) {
+            if (p < s.size()) {
+                s.replace(p, 1, "=");
+                p++;
+            }
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
     srand(time(0));
-    int count_mnist_images = 1;
+
+//READ MNIST
+    int count_mnist_images_train = -1;
+    int count_mnist_images_test = -1;
     int size_mnist_images = 28*28;
-
-    float** image = read_mnist_images("..\\train\\train-images.idx3-ubyte", count_mnist_images, size_mnist_images);
-    int* lable = read_mnist_labels("..\\train\\train-labels.idx1-ubyte", count_mnist_images);
-
-    size_t epoch = 1; // epoch
-    // count_mnist_images = 30000;
+    float** image_train = read_mnist_images("..\\train\\train-images.idx3-ubyte", count_mnist_images_train, size_mnist_images);
+    int* lable_train = read_mnist_labels("..\\train\\train-labels.idx1-ubyte", count_mnist_images_train);
+    float** image_test = read_mnist_images("..\\test\\t10k-images.idx3-ubyte", count_mnist_images_test, size_mnist_images);
+    int* lable_test = read_mnist_labels("..\\test\\t10k-labels.idx1-ubyte", count_mnist_images_test);
 
 // CREATE NN
     int input = 28*28;
     int output = 10;
-    //                         first  hiden     exit
-    //                        |-----||--------||-----|
-    Neuron* nn = new Neuron(3, input, 300, 100, output);
-    //                      ↑          │    │     │
-    //                      =         +1   +1    +1
-    //                      └──────────┴────┴─────┘
+    //                                     first    hiden   exit
+    //                                   |-------||--------||--|
+    std::vector<unsigned int> size_layers{ 28 * 28, 300, 100, 10}; // size = 3
+    //                                              │    │    │             ↑
+    //                                             +1   +1   +1             =
+    //                                              └────┴────┴─────────────┘
+    // Neuron nn(size_layers); // first arhitecture
+    NN nn(size_layers); //second architecture (i thk its better)
 
-// GENERATION INPUTS
+// GENERATION INPUTS (not use)
     size_t N = 28*28;
     float* first = new float[N];
     float* second = new float[N];
     for (size_t i = 0; i < N; i++){
         first[i] =  (rand() % 98) * 0.01 + 0.01;
         second[i] = (rand() % 98) * 0.01 + 0.01;
-        // std::cout << first[i] << " " << second[i] << std::endl;
     }
 
 // GENERATION OUTPUT - TARGETS
-
-    float** lable_arr = new float* [count_mnist_images];
-    for (int i = 0; i < count_mnist_images; i++) {
-        lable_arr[i] = new float[10]();
-        lable_arr[i][(int)lable[i]] = 1.0;
+    float** lable_arr_train = new float* [count_mnist_images_train];
+    float** lable_arr_test = new float* [count_mnist_images_test];
+    for (int i = 0; i < count_mnist_images_train; i++) {
+        lable_arr_train[i] = new float[10]();
+        lable_arr_train[i][(int)lable_train[i]] = 1.0;
+    }
+    for (int i = 0; i < count_mnist_images_test; i++) {
+        lable_arr_test[i] = new float[10]();
+        lable_arr_test[i][(int)lable_test[i]] = 1.0;
     }
 
-// PRINT FIRST LABLE AND IMAGE
+// PRINT FIRST LABLE
     for (int i = 0; i < 1; i++) {
-        for (int j = 0; j < 10; j++) std::cout << lable_arr[i][j] << " ";
+        for (int j = 0; j < 10; j++) std::cout << lable_arr_train[i][j] << " ";
         std::cout << std::endl;
     }
-    printImg(image[100]);
-    
 
+// PRINT HUNDREDTH IMAGE
+    std::cout << std::endl << "THIS " << (int)lable_train[100] << std::endl;
+    printImg(image_train[100]);
+    
 // START NN 
     std::cout << std::endl << "-------------------------------------" << std::endl;
-    nn->filling(image[333]);
-    nn->filling(image[666]);
 
+    //nn.filling(image_train[333]);
+    std::cout << std::endl << "THIS 666" << std::endl;
+    nn.filling(image_train[666]);
 
     std::cout << std::endl << "----------------TRAINIG--------------" << std::endl;
+    size_t epoch = 1; // epoch
+    count_mnist_images_train = 3000; //rewrite size database
+
+    std::thread thread(printProgress, count_mnist_images_train); // thread for progress bar
 
     for (size_t i = 0; i < epoch; i++) {
-        for (size_t j = 0; j < count_mnist_images; j++) {
-            //if (j % 100 == 0 && j != 0) std::cout << "Done: " << j << std::endl;
-            nn->train(image[j], lable_arr[j]);
+        for (size_t j = 0; j < count_mnist_images_train; j++) {
+            prog = j;
+            nn.train(image_train[j], lable_arr_train[j]);
         }
     }
 
+    if (thread.joinable()) thread.join();
+
     std::cout << std::endl << "-----------------RESULT--------------" << std::endl;
 
-    std::cout << std::endl << "THIS " <<(int)lable[100] << std::endl;
-    nn->filling(image[100]);
-    std::cout << std::endl << "THIS " << (int)lable[200] << std::endl;
-    nn->filling(image[200]);
+    std::cout << std::endl << "THIS " <<(int)lable_train[100] << std::endl;
+    nn.filling(image_train[100]);
+    std::cout << std::endl << "THIS " << (int)lable_train[200] << std::endl;
+    nn.filling(image_train[200]);
+
+    std::cout << std::endl << "---------------TESTING---------------" << std::endl;
+
+    unsigned int current = 0;
+    unsigned int error = 0;
+
+
 
 
     std::cout << std::endl << "---------------THE END---------------" << std::endl;

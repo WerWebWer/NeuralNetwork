@@ -89,13 +89,14 @@ struct nnLayer {
 
 class Neuron {
 public:
-    Neuron(int N, int first, ...);
+    Neuron(std::vector<unsigned int> layers);
 
     void runThrough(bool ok);
     void backPropagate();
     void train(float* in, float* targ);
     void filling(float* in);
     void printArray(float* arr, size_t s);
+    std::pair<int, float> highProbability(float* in);
 
 private:
     struct nnLayer* list; // layers
