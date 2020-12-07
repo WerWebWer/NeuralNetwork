@@ -208,7 +208,7 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl << "-------------------------------------" << std::endl;
 
     std::cout << std::endl << "THIS IS " << lable_train[100] << " (100)"; //1000 from database
-    nn.filling(image_train[1000]);
+    nn.filling(image_train[100]);
 
     std::cout << std::endl << "----------------TRAINIG--------------" << std::endl;
     std::cout << std::endl;
@@ -231,10 +231,13 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl << "THIS " <<(int)lable_train[100] << " (100)" << std::endl;
     nn.filling(image_train[100]);
 
+// SAVE WIGHTS TO FILE
+    nn.saveNN();
+
 // TEST NN 
 
     std::cout << std::endl << "---------------TESTING---------------" << std::endl;
-
+    std::cout << std::endl;
     unsigned int current = 0;
     unsigned int error = 0;
     std::vector<std::pair<int, float>> errors;

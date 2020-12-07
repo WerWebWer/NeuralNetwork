@@ -4,7 +4,7 @@ by WerWebWer
 
 # Neural Network
 
-This neural network uses [MNIST](http://yann.lecun.com/exdb/mnist/) data and a backpropogation algorithm.
+This neural network uses [MNIST](http://yann.lecun.com/exdb/mnist/) data and a [Backpropagation](https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/) algorithm.
 By default, the neural network has two hidden layers, dimensions 300 and 100. The error for this neural network = 7,15%
 
 ## New Features!

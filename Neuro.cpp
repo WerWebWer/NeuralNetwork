@@ -9,6 +9,10 @@ void Neuro::setAddWight(unsigned int i, float val) {
     wights[i] += val;
 }
 
+void Neuro::setWight(unsigned int i, float val) {
+    wights[i] = val;
+}
+
 void Layer::setIO(unsigned int _in, unsigned int _out) {
     in = _in;
     out = _out;
@@ -56,8 +60,13 @@ void Layer::updMatrix(float* enteredVal) {
     }
 }
 
-void Layer::setMatrix() {
-    
+void Layer::setMatrix(int w, int h, float wight) {
+    matrix[w].setWight(h, wight);
+}
+
+
+void Layer::setHidden(int i, float val) {
+    hidden[i] = val;
 }
 
 NN::NN(std::vector<unsigned int> layers) {
@@ -75,6 +84,10 @@ NN::NN(std::vector<unsigned int> layers) {
     }
 }
 
+NN::NN(std::string path) {
+    readNN(path);
+}
+
 void NN::filling(float* in) {
     inputs = in;
     list[0].makeHidden(inputs);
@@ -85,9 +98,7 @@ void NN::filling(float* in) {
         float tmp = list[layerCount - 1].getHid(out);
         std::cout << out << ": " << tmp << std::endl;;
     }
-    std::cout << std::endl;
     return;
-    
 }
 
 void NN::train(float* in, float* targ) {
@@ -132,20 +143,58 @@ void NN::saveNN() {
     std::time_t t = std::time(0); // get time now
     std::tm* now = std::localtime(&t);
 
-    std::string name = "NN_" + std::to_string(now->tm_year + 1900); +"_" +
+    std::string name = "../NN_" + std::to_string(now->tm_year + 1900) +"_" +
         std::to_string(now->tm_mon + 1) + "_" + std::to_string(now->tm_mday) + "_" +
         std::to_string(now->tm_hour) + "_" + std::to_string(now->tm_min) + "_" + 
         std::to_string(now->tm_sec) + ".txt";
 
     std::ofstream out (name);
     out << layerCount << std::endl;
-    for (int i = 0; i < layerCount; i++) {
-        out << list[i].getSize().first << " " << list[i].getSize().second << std::endl;
-    }
+    for (int i = 0; i < layerCount; i++)
+        out  << list[i].getSize().first << " " << list[i].getSize().second << std::endl;
     for (int i = 0; i < layerCount; i++) {
         for (int hid = 0; hid < list[i].getInCount(); hid++)
-            for (int ou = 0; ou < list[i].getOutCount(); ou++)
-                out << list[i].getMatrix()[hid].getWight(ou) << " ";
+            for (int ou = 0; ou < list[i].getOutCount(); ou++) {
+                float tmp = list[i].getMatrix()[hid].getWight(ou);
+                out << tmp << " ";
+            }
         out << std::endl;
+    }
+    //for (int i = 0; i < layerCount; i++) {
+    //    for (int hid = 0; hid < list[i].getOutCount(); hid++)
+    //            out << list[i].getHidden()[hid] << " ";
+    //    out << std::endl;
+    //}
+}
+
+void NN::readNN(std::string path) {
+    std::ifstream file(path, std::ios::out);
+
+    if (file.is_open()) {
+        file >> layerCount;
+        list = (Layer*)malloc((layerCount) * sizeof(Layer));
+        int tmp = -1;
+        int in = 0, out = 0;
+        for (int i = 0; i < layerCount; i++) {
+            file >> in >> out;
+            if (i == 0) tmp = in;
+            list[i].setIO(in, out);
+        }
+        inputs = (float*)malloc((tmp) * sizeof(float));
+        targets = (float*)malloc((out) * sizeof(float));
+        float wight = 0;
+        for (int i = 0; i < layerCount; i++)
+            for (int hid = 0; hid < list[i].getInCount(); hid++)
+                for (int ou = 0; ou < list[i].getOutCount(); ou++) {
+                    file >> wight;
+                    list[i].setMatrix(hid, ou, wight);
+                }
+        //for (int i = 0; i < layerCount; i++)
+        //    for (int hid = 0; hid < list[i].getOutCount(); hid++) {
+        //        file >> wight;
+        //        list[i].setHidden(hid, wight);
+        //    }
+    } else {
+        throw std::runtime_error("Unable to open file `" + path + "`");
     }
 }
