@@ -9,7 +9,7 @@ By default, the neural network has two hidden layers, dimensions 300 and 100. Th
 
 ## New Features!
 
-  - Print by *0* and *1* images
+  - Print images by *0* and *1*
 
 You can also:
   - Save to file wights
@@ -21,12 +21,12 @@ You can also:
 Clone the repository and run the following commands
 
 ```sh
-$ mkdir build
-$ cd build
+$ mkdir build && cd build
 $ cmake ..
+$ cmake --build . --config RELEASE
 ```
 
-Then run `NN.exe`
+Then run `./build/Release/NN.exe`
 
 ## What's under the box?
 
