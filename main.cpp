@@ -4,7 +4,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <limits> 
-#include <stdint.h>
 #include <cstdint>
 #include <stdio.h>
 #include <Windows.h>
@@ -125,26 +124,27 @@ void getSizeWindows() {
         printf("Error: %d\n", GetLastError());
 }
 
-void printProgress(int count_mnist_images_train) {
+void printProgress(int max) {
     getSizeWindows();
     widht -= 19;
     std::string s = "";
     for (int i = 0; i < widht; i++) s += "-";
-    std::cout << s.size() << std::endl;
-    int one_simbol = count_mnist_images_train / widht;
+    int one_simbol = max / widht;
     int p = 0;
-    while (prog < count_mnist_images_train-1) {
-        int progress = prog * 100 / count_mnist_images_train;
+    while (prog < max-1) {
+        int progress = prog * 100 / max;
         printf("\rProcessing (%d%%) [%s]", progress, s.c_str()); //19
         fflush(stdout);
         
-        if (count_mnist_images_train * p /92 == prog) {
+        if (max * p / widht == prog) {
             if (p < s.size()) {
                 s.replace(p, 1, "=");
                 p++;
             }
         }
     }
+    s = s.substr(0, s.size() - 1);
+    printf("\rProcessing (%d%%) [%s]\n", 100, s.c_str());
 }
 
 int main(int argc, char* argv[]) {
@@ -165,9 +165,10 @@ int main(int argc, char* argv[]) {
     //                                     first    hiden   exit
     //                                   |-------||--------||--|
     std::vector<unsigned int> size_layers{ 28 * 28, 300, 100, 10}; // size = 3
-    //                                              │    │    │             ↑
-    //                                             +1   +1   +1             =
-    //                                              └────┴────┴─────────────┘
+    //                                               │    │   │              ↑
+    //                                              +1   +1  +1              =
+    //                                               └────┴───┴──────────────┘
+
     // Neuron nn(size_layers); // first arhitecture
     NN nn(size_layers); //second architecture (i thk its better)
 
@@ -193,10 +194,11 @@ int main(int argc, char* argv[]) {
     }
 
 // PRINT FIRST LABLE
-    for (int i = 0; i < 1; i++) {
-        for (int j = 0; j < 10; j++) std::cout << lable_arr_train[i][j] << " ";
-        std::cout << std::endl;
-    }
+
+    //for (int i = 0; i < 1; i++) {
+    //    for (int j = 0; j < 10; j++) std::cout << lable_arr_train[i][j] << " ";
+    //    std::cout << std::endl;
+    //}
 
 // PRINT HUNDREDTH IMAGE
     std::cout << std::endl << "THIS " << (int)lable_train[100] << std::endl;
@@ -205,15 +207,15 @@ int main(int argc, char* argv[]) {
 // START NN 
     std::cout << std::endl << "-------------------------------------" << std::endl;
 
-    //nn.filling(image_train[333]);
-    std::cout << std::endl << "THIS 666" << std::endl;
-    nn.filling(image_train[666]);
+    std::cout << std::endl << "THIS IS " << lable_train[100] << " (100)"; //1000 from database
+    nn.filling(image_train[1000]);
 
     std::cout << std::endl << "----------------TRAINIG--------------" << std::endl;
+    std::cout << std::endl;
     size_t epoch = 1; // epoch
-    count_mnist_images_train = 3000; //rewrite size database
+    count_mnist_images_train = 300; //rewrite size train database
 
-    std::thread thread(printProgress, count_mnist_images_train); // thread for progress bar
+    std::thread thread_train(printProgress, count_mnist_images_train); // thread for progress bar
 
     for (size_t i = 0; i < epoch; i++) {
         for (size_t j = 0; j < count_mnist_images_train; j++) {
@@ -222,22 +224,38 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (thread.joinable()) thread.join();
+    if (thread_train.joinable()) thread_train.join();
 
     std::cout << std::endl << "-----------------RESULT--------------" << std::endl;
 
-    std::cout << std::endl << "THIS " <<(int)lable_train[100] << std::endl;
+    std::cout << std::endl << "THIS " <<(int)lable_train[100] << " (100)" << std::endl;
     nn.filling(image_train[100]);
-    std::cout << std::endl << "THIS " << (int)lable_train[200] << std::endl;
-    nn.filling(image_train[200]);
+
+// TEST NN 
 
     std::cout << std::endl << "---------------TESTING---------------" << std::endl;
 
     unsigned int current = 0;
     unsigned int error = 0;
+    std::vector<std::pair<int, float>> errors;
+    // count_mnist_images_test = 1000; //rewrite size test database 
 
+    std::thread thread_test(printProgress, count_mnist_images_test); // thread for progress bar
 
+    for (unsigned int i = 0; i < count_mnist_images_test; i++) {
+        std::pair<int, float> res = nn.highProbability(image_test[i]);
+        prog = i;
+        if (res.first != lable_test[i]) {
+            error++;
+            errors.push_back(res);
+        } else {
+            current++;
+        }
+    }
 
+    if (thread_test.joinable()) thread_test.join();
+
+    std::cout << "TOTAL: " << (float)error * 100.0 / (float)count_mnist_images_test << "%" << std::endl;
 
     std::cout << std::endl << "---------------THE END---------------" << std::endl;
 

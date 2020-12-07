@@ -3,6 +3,10 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include <fstream>
+#include <chrono>
+#include <ctime>
+#include <string>
 
 #define learnRate 0.1 // better 0.01 ???
 #define randWeight (( ((float)rand() / (float)RAND_MAX) - 0.5)* pow(size,-0.2))
@@ -14,6 +18,7 @@ public:
     Neuro();
     void init(unsigned int in);
     float getWight(unsigned int i) { return wights[i]; };
+    unsigned int getSize() { return size; };
     void setRandWights() { for (size_t i = 0; i < size; i++) wights[i] = randWeight; };
     void setAddWight(unsigned int i, float val);
 
@@ -38,6 +43,8 @@ public:
     void calcOutError(float* targets);
     void calcHidError(float* targets, Neuro* Weights, unsigned int inS, unsigned int outS);
     void updMatrix(float* enteredVal);
+    std::pair<int, int> getSize() { return std::pair<int, int>(in, out); };
+    void setMatrix();
 private:
     unsigned int in; // this layer
     unsigned int out; // next layer
@@ -53,6 +60,7 @@ public:
     void train(float* in, float* targ); // => backPropagate()
     void backPropagate(); 
     std::pair<int, float> highProbability(float* in); // find out what it is
+    void saveNN();
 private:
     Layer* list; // layers
     int inputNeurons;  // first layer

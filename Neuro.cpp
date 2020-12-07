@@ -56,6 +56,10 @@ void Layer::updMatrix(float* enteredVal) {
     }
 }
 
+void Layer::setMatrix() {
+    
+}
+
 NN::NN(std::vector<unsigned int> layers) {
     int N = layers.size() - 1;
     inputNeurons = layers[0];
@@ -124,3 +128,24 @@ std::pair<int, float> NN::highProbability(float* in) {
     return std::pair<int, float>(max_count, max_probability);
 }
 
+void NN::saveNN() {
+    std::time_t t = std::time(0); // get time now
+    std::tm* now = std::localtime(&t);
+
+    std::string name = "NN_" + std::to_string(now->tm_year + 1900); +"_" +
+        std::to_string(now->tm_mon + 1) + "_" + std::to_string(now->tm_mday) + "_" +
+        std::to_string(now->tm_hour) + "_" + std::to_string(now->tm_min) + "_" + 
+        std::to_string(now->tm_sec) + ".txt";
+
+    std::ofstream out (name);
+    out << layerCount << std::endl;
+    for (int i = 0; i < layerCount; i++) {
+        out << list[i].getSize().first << " " << list[i].getSize().second << std::endl;
+    }
+    for (int i = 0; i < layerCount; i++) {
+        for (int hid = 0; hid < list[i].getInCount(); hid++)
+            for (int ou = 0; ou < list[i].getOutCount(); ou++)
+                out << list[i].getMatrix()[hid].getWight(ou) << " ";
+        out << std::endl;
+    }
+}
